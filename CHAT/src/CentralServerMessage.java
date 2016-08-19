@@ -6,6 +6,22 @@ public class CentralServerMessage {
     private String type;
     private ClientDetail entityDetail;
 
+    @Override
+    public int hashCode() {
+        return entityDetail.hashCode() + type.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj)
+            return true;
+        if((obj == null) || (obj.getClass() != this.getClass()))
+            return false;
+
+        CentralServerMessage test = (CentralServerMessage)obj;
+        return type.equals(test.type) && entityDetail.equals(test.entityDetail);
+    }
+
     CentralServerMessage(String message)
     {
         String[] splitMessage=message.split("+s//");

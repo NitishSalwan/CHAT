@@ -5,6 +5,22 @@ import java.io.Serializable;
  */
 public class ClientDetail implements Serializable{
 
+    @Override
+    public int hashCode() {
+        return (getipAddress().hashCode() + getlisteningPort());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj)
+            return true;
+        if((obj == null) || (obj.getClass() != this.getClass()))
+            return false;
+
+        ClientDetail test = (ClientDetail)obj;
+        return ipAddress.equals(test.ipAddress) && listeningPort==test.listeningPort;
+    }
+
     private String ipAddress;
     private int listeningPort;
 
