@@ -7,7 +7,7 @@ public class ClientDetail implements Serializable{
 
     @Override
     public int hashCode() {
-        return (getipAddress().hashCode() + getlisteningPort());
+        return (getIpAddress().hashCode() + getListeningPort());
     }
 
     @Override
@@ -26,23 +26,23 @@ public class ClientDetail implements Serializable{
 
     ClientDetail(String ipAddress,int port)
     {
-        setipAddress(ipAddress);
-        setlisteningPort(port);
+        setIpAddress(ipAddress);
+        setListeningPort(port);
     }
 
-    public String getipAddress() {
+    public String getIpAddress() {
         return ipAddress;
     }
 
-    public void setipAddress(String ipAddress) {
+    public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
     }
 
-    public int getlisteningPort() {
+    public int getListeningPort() {
         return listeningPort;
     }
 
-    public void setlisteningPort(int listeningPort) {
+    public void setListeningPort(int listeningPort) {
         this.listeningPort = listeningPort;
     }
 }

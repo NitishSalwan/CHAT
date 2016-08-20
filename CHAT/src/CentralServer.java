@@ -18,14 +18,12 @@ public class CentralServer implements Serializable {
     private Socket socket;
     private BufferedReader reader;
 
-
-
     public List<ClientDetail> getActiveClients() {
         return activeClients;
     }
 
     public void setActiveClients(List<ClientDetail> activeClients) {
-        CentralServer.activeClients = activeClients;
+        this.activeClients = activeClients;
     }
 
     private CentralServer()
@@ -35,7 +33,7 @@ public class CentralServer implements Serializable {
 
     public static CentralServer getInstance()
     {
-        if(activeClients==null)
+        if(centralServerInstance==null)
         {
             centralServerInstance = new CentralServer();
         }
@@ -59,7 +57,7 @@ public class CentralServer implements Serializable {
             try
             {
                 socket = serverSocket.accept();
-                ObjectInputStream ois = new ObjectInputStream(this.socket.getInputStream());
+                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 
                 CentralServerMessage tempMessage;
 
@@ -67,7 +65,7 @@ public class CentralServer implements Serializable {
                 {
                     while((tempMessage=(CentralServerMessage)ois.readObject())!=null)
                         {
-                            processMessage(tempMessage);
+                            processMessage(tempMessage,socket);
                         }
                 }
                 catch (Exception e)
@@ -83,19 +81,23 @@ public class CentralServer implements Serializable {
         }
     }
 
-    private void processMessage(CentralServerMessage message)
+    private void processMessage(CentralServerMessage message,Socket socket)
     {
         if(message.getType().equals("register"))
         {
             centralServerInstance.getActiveClients().add(message.getEntityDetail());
-            //sendAck(message,"registration done");
-            sendActiveClientsList(message,getActiveClients());
+            sendAck(message,"registrationDone",socket);
+
 
         }
         else if(message.getType().equals("unregister"))
         {
             centralServerInstance.getActiveClients().remove(message.getEntityDetail());
-            //sendAck(message,"registration cancel");
+            sendAck(message,"registrationCancel",socket);
+        }
+        else if(message.getType().equals("getclientslist"))
+        {
+            sendActiveClientsList(message,getActiveClients(),socket);
         }
         else {
             throw new UnsupportedOperationException("No method with corresponding message");
@@ -104,11 +106,9 @@ public class CentralServer implements Serializable {
 
 
 
-    /*
-    private void sendAck(CentralServerMessage message,String action) {
+
+    private void sendAck(CentralServerMessage message,String action,Socket socket) {
         try {
-            Socket socket = new Socket();
-            socket.connect(new InetSocketAddress(message.getEntityDetail().getipAddress(), message.getEntityDetail().getlisteningPort()), 10000);
             PrintWriter writer = new PrintWriter(socket.getOutputStream());
             writer.println(action);
             writer.flush();
@@ -120,15 +120,16 @@ public class CentralServer implements Serializable {
             e.printStackTrace();
         }
     }
-    */
 
 
-    private void sendActiveClientsList(CentralServerMessage message,List<ClientDetail> activeClients) {
+
+    private void sendActiveClientsList(CentralServerMessage message,List<ClientDetail> activeClients,Socket socket) {
         try {
-            Socket socket = new Socket();
-            socket.connect(new InetSocketAddress(message.getEntityDetail().getipAddress(), message.getEntityDetail().getlisteningPort()), 10000);
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-            out.writeObject(getActiveClients());
+            for(ClientDetail clientDetail : getActiveClients())
+            {
+                out.writeObject(clientDetail);
+            }
             out.close();
             socket.close();
         }
@@ -142,5 +143,5 @@ public class CentralServer implements Serializable {
 
 
 
-}
+
 

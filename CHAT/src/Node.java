@@ -1,6 +1,4 @@
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.*;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -32,13 +30,65 @@ public class Node {
             }
         }
         myListeningPort = port;
-        register(centralServerAddress);
+        if(register(centralServerAddress))
+        {
+            captureActiveClientsList(centralServerAddress));
+        }
+        else
+        {
+            System.out.println("Server doesn't not Exist");
+            System.exit(0);
+        }
 
 
 
     }
 
-    private void register(InetSocketAddress centralServerAddress)
+    public boolean unRegister(InetSocketAddress centralServerAddress)
+    {
+        try
+        {
+            Socket socket = new Socket();
+            socket.connect(centralServerAddress, 10000);
+            CentralServerMessage message = new CentralServerMessage("unregister " + myIpAddress + " " + myListeningPort);
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            out.writeObject(message);
+
+            boolean registered = isUnRegistered(socket);
+
+
+            out.close();
+            socket.close();
+            return registered;
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    private boolean isUnRegistered(Socket socket) throws Exception {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        String messageStr;
+        try {
+            while ((messageStr = reader.readLine()) != null) {
+                if(messageStr.equals("registrationCancel"))
+                {
+                    return true;
+                }
+            }
+        }
+        catch(Exception e)
+        {
+
+        }
+        return false;
+    }
+
+
+    private boolean register(InetSocketAddress centralServerAddress)
     {
         try
         {
@@ -48,35 +98,60 @@ public class Node {
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
             out.writeObject(message);
 
-            captureActiveClientsList();
+            boolean registered = isRegistered(socket);
+
 
             out.close();
             socket.close();
+            return registered;
         }
         catch(Exception e)
         {
             e.printStackTrace();
         }
 
+        return false;
 
     }
 
-    private void captureActiveClientsList()
+    private boolean isRegistered(Socket socket) throws Exception {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        String messageStr;
+        try {
+            while ((messageStr = reader.readLine()) != null) {
+                if(messageStr.equals("registrationDone"))
+                {
+                    return true;
+                }
+            }
+        }
+        catch(Exception e)
+        {
+
+        }
+        return false;
+    }
+
+    private void captureActiveClientsList(InetSocketAddress centralServerAddress)
     {
         try {
-            ServerSocket serverSocket = new ServerSocket(myListeningPort);
-            Socket socket = serverSocket.accept();
-            ObjectInputStream ois = new ObjectInputStream(this.socket.getInputStream());
-            List<ClientDetail> tempList;
+            Socket socket = new Socket();
+            socket.connect(centralServerAddress, 10000);
+            CentralServerMessage message = new CentralServerMessage("getclientslist " + myIpAddress + " " + myListeningPort);
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            out.writeObject(message);
+
+
+            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+            ClientDetail client;
             try
             {
-                while((tempList=(List<ClientDetail>)ois.readObject())!=null)
+                while((client=(ClientDetail)ois.readObject())!=null)
                 {
-                    activeClients=tempList;
+                    activeClients.add(client);
                 }
                 socket.close();
                 ois.close();
-                serverSocket.close();
             }
             catch (Exception e)
             {

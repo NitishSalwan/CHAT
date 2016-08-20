@@ -26,8 +26,8 @@ public class CentralServerMessage {
     {
         String[] splitMessage=message.split("+s//");
         setType(splitMessage[0]);
-        entityDetail.setipAddress(splitMessage[1]);
-        entityDetail.setlisteningPort(Integer.parseInt(splitMessage[2]));
+        entityDetail.setIpAddress(splitMessage[1]);
+        entityDetail.setListeningPort(Integer.parseInt(splitMessage[2]));
     }
 
     public String getType() {
@@ -38,8 +38,8 @@ public class CentralServerMessage {
         this.type = type;
     }
 
-    public void setEntityIpAddress(String ipAddress) {
-        entityDetail.setipAddress(ipAddress);
+    public void setEntityIpAddress(String ipAddress {
+        entityDetail.setIpAddress(ipAddress);
     }
 
     public ClientDetail getEntityDetail(){
@@ -47,7 +47,7 @@ public class CentralServerMessage {
     }
 
     public void setEntityListeningPort(int port){
-        entityDetail.setlisteningPort(port);
+        entityDetail.setListeningPort(port);
     }
 
 }
