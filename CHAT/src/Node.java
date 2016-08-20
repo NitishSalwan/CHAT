@@ -10,12 +10,62 @@ import java.util.List;
  */
 public class Node {
 
-    private String myIpAddress;
-    private int myListeningPort;
+    private static String myIpAddress;
+    private static int myListeningPort;
     private List<ClientDetail> myPeersList;
     private List<ClientDetail> activeClients;
+    private NodeClient client;
+    private MiniServer miniServer;
 
-    Node(InetSocketAddress centralServerAddress,int port) throws Exception {
+    public static String getMyIpAddress() {
+        return myIpAddress;
+    }
+
+    public static void setMyIpAddress(String myIpAddress) {
+        Node.myIpAddress = myIpAddress;
+    }
+
+    public static int getMyListeningPort() {
+        return myListeningPort;
+    }
+
+    public static void setMyListeningPort(int myListeningPort) {
+        Node.myListeningPort = myListeningPort;
+    }
+
+    public List<ClientDetail> getMyPeersList() {
+        return myPeersList;
+    }
+
+    public void setMyPeersList(List<ClientDetail> myPeersList) {
+        this.myPeersList = myPeersList;
+    }
+
+    public List<ClientDetail> getActiveClients() {
+        return activeClients;
+    }
+
+    public void setActiveClients(List<ClientDetail> activeClients) {
+        this.activeClients = activeClients;
+    }
+
+    public NodeClient getClient() {
+        return client;
+    }
+
+    public void setClient(NodeClient client) {
+        this.client = client;
+    }
+
+    public MiniServer getMiniServer() {
+        return miniServer;
+    }
+
+    public void setMiniServer(MiniServer miniServer) {
+        this.miniServer = miniServer;
+    }
+
+    Node(InetSocketAddress centralServerAddress, int port) throws Exception {
         //InetAddress localHost = InetAddress.getLocalHost();
         Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
         for (NetworkInterface netint : Collections.list(nets))
@@ -32,13 +82,16 @@ public class Node {
         myListeningPort = port;
         if(register(centralServerAddress))
         {
-            captureActiveClientsList(centralServerAddress));
+            captureActiveClientsList(centralServerAddress);
+            client = NodeClient.getInstance();
+            miniServer=MiniServer.getInstance();
         }
         else
         {
             System.out.println("Server doesn't not Exist");
             System.exit(0);
         }
+
 
 
 
@@ -132,8 +185,7 @@ public class Node {
         return false;
     }
 
-    private void captureActiveClientsList(InetSocketAddress centralServerAddress)
-    {
+    private void captureActiveClientsList(InetSocketAddress centralServerAddress) {
         try {
             Socket socket = new Socket();
             socket.connect(centralServerAddress, 10000);
@@ -144,30 +196,36 @@ public class Node {
 
             ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
             ClientDetail client;
-            try
-            {
-                while((client=(ClientDetail)ois.readObject())!=null)
-                {
+            try {
+                while ((client = (ClientDetail) ois.readObject()) != null) {
                     activeClients.add(client);
                 }
                 socket.close();
                 ois.close();
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
 
         }
+
+    }
+
+    public void sendReply()
+    {
+
+        client.sendReply();
+
+
     }
 
 
-    public static void main(String[] args) {
+
+
+    public static void main(String[] args) throws Exception{
         System.out.print("hello");
+        Node nodeInstance = new Node(new InetSocketAddress("127.0.0.1",1000),345);
     }
 
 }

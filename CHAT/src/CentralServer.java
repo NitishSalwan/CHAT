@@ -31,7 +31,7 @@ public class CentralServer implements Serializable {
         activeClients = new ArrayList<>();
     }
 
-    public static CentralServer getInstance()
+    public synchronized static CentralServer getInstance()
     {
         if(centralServerInstance==null)
         {
@@ -113,7 +113,6 @@ public class CentralServer implements Serializable {
             writer.println(action);
             writer.flush();
             writer.close();
-            socket.close();
         }
         catch(Exception e)
         {
