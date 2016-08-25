@@ -8,86 +8,117 @@ import java.net.Socket;
 /**
  * Created by Nitish on 8/17/2016.
  */
-public class MiniServer {
+public class MiniServer implements Runnable
+{
 
         private static MiniServer miniServerInstance = null;
         private Node node;
+        private boolean isServerUp;
+        private ServerSocket serverSocket;
 
+    public Node getNode() {
+        return node;
+    }
 
-        private MiniServer()
+    public void setNode(Node node) {
+        this.node = node;
+    }
+
+    public boolean isServerUp() {
+        return isServerUp;
+    }
+
+    public void setServerUp(boolean serverUp) {
+        isServerUp = serverUp;
+    }
+
+    private MiniServer(Node node)
         {
-
+            this.node=node;
+            try{
+                serverSocket = new ServerSocket();
+                isServerUp = true;
+            }
+            catch(Exception e)
+            {
+                isServerUp = false;
+            }
         }
 
-        public synchronized static MiniServer getInstance()
+    public synchronized static MiniServer getInstance()
         {
             if(miniServerInstance == null)
             {
                 miniServerInstance = new MiniServer();
             }
-
             return miniServerInstance;
         }
 
 
-        void acceptConnections()
+    public void run ()
         {
-            try {
-                ServerSocket serverSocket = new ServerSocket();
-
-                //BufferedReader reader = new BufferedReader((new InputStreamReader(socket.getInputStream())));
                 while(true)
                 {
-                    Socket socket = serverSocket.accept();
-                    new Thread(new RequestHandler(socket,miniServerInstance)).start();
-                }
-            }
-            catch(Exception e)
-            {
 
-            }
+                    Socket socket = null;
+                    try {
+                        socket = serverSocket.accept();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    BufferedReader reader = null;
+                    try
+                    {
+                        reader = new BufferedReader((new InputStreamReader(socket.getInputStream())));
+                    String tempMessage;
+                    while((tempMessage = reader.readLine())!=null)
+                    {
+
+                        String[] tempMessageSplit = tempMessage.split("+s//");
+                        if(tempMessageSplit[0].equals("wanttochat"))
+                        {
+
+                            if(checkResources())
+                            {
+                                sendAvailability("sure",socket);
+                                new Thread(new ChatHandler(socket)).start();
+
+                            }
+                            else
+                            {
+                                sendAvailability("notavailable",socket);
+                            }
+
+                        }
+                    }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+
+
+
+
         }
 
-       class RequestHandler implements Runnable
-       {
-           Socket socket;
-           MiniServer miniServerInstance=null;
-           BufferedReader reader;
+
+    private void sendAvailability(String message,Socket socket) throws Exception
+    {
+
+            PrintWriter writer =new PrintWriter(socket.getOutputStream());
+            writer.println("sure");
+            writer.flush();
+            writer.close();
+
+    }
+
+        private boolean checkResources()
+        {
+
+        }
 
 
-           RequestHandler(Socket socket,MiniServer miniServerInstance) throws Exception {
-               this.socket=socket;
-               this.miniServerInstance = miniServerInstance;
-               reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-           }
-
-           public void run()
-           {
-               String tempMessage;
-               try {
-                   while((tempMessage = reader.readLine())!=null)
-                   {
-                       processMessage(tempMessage,socket);
-                   }
-               } catch (IOException e) {
-                   e.printStackTrace();
-               }
-           }
-
-           private void processMessage(String message,Socket socket) throws Exception {
-
-               String[] tempMessageSplit = message.split("+s//");
-               if(tempMessageSplit[0].equals("wanttochat"))
-               {
-                   PrintWriter writer =new PrintWriter(socket.getOutputStream());
-                   writer.println("sure");
-                   writer.flush();
-                   writer.close();
-               }
-           }
-
-       }
 
 
 

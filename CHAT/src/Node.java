@@ -1,8 +1,6 @@
 import java.io.*;
 import java.net.*;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -14,7 +12,7 @@ public class Node {
     private static int myListeningPort;
     private List<ClientDetail> myPeersList;
     private List<ClientDetail> activeClients;
-    private NodeClient client;
+    private ChatHandler client;
     private MiniServer miniServer;
 
     public static String getMyIpAddress() {
@@ -49,11 +47,11 @@ public class Node {
         this.activeClients = activeClients;
     }
 
-    public NodeClient getClient() {
+    public ChatHandler getClient() {
         return client;
     }
 
-    public void setClient(NodeClient client) {
+    public void setClient(ChatHandler client) {
         this.client = client;
     }
 
@@ -79,23 +77,88 @@ public class Node {
                 }
             }
         }
+
         myListeningPort = port;
-        if(register(centralServerAddress))
+
+        miniServer=MiniServer.getInstance();
+
+        if(miniServer.isServerUp())
         {
-            captureActiveClientsList(centralServerAddress);
-            client = NodeClient.getInstance();
-            miniServer=MiniServer.getInstance();
+            new Thread(miniServer).start();
+            if(register(centralServerAddress))
+            {
+                captureActiveClientsList(centralServerAddress);
+            }
+            else
+            {
+                System.out.println("Server doesn't not Exist");
+                System.exit(0);
+            }
         }
         else
         {
-            System.out.println("Server doesn't not Exist");
-            System.exit(0);
+            System.out.println("Mini Server is not Up");
+        }
+    }
+
+
+
+
+
+    public void request(ClientDetail peer) throws Exception {
+        Socket socket = new Socket();
+        socket.connect(new InetSocketAddress(peer.getIpAddress(),peer.getListeningPort()),10000);
+        PrintWriter writer =new PrintWriter(socket.getOutputStream());
+        writer.println("wanttochat " +  Node.getMyIpAddress() + " " + Node.getMyListeningPort());
+        writer.flush();
+        writer.close();
+
+        if(isRequestAccepted(socket))
+        {
+            //Write Logic for chat
+            new Thread(new ChatHandler(socket)).start();
+        }
+        else
+        {
+
+            //person nis not available ,Write logic to handle that
+            socket.close();
+            //Display some message saying he is not available
         }
 
 
 
 
+        socket.close();
     }
+
+    private boolean isRequestAccepted(Socket socket)
+    {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        String messageStr;
+        try
+        {
+            while ((messageStr = reader.readLine()) != null)
+            {
+                if(messageStr.equals("sure"))
+                {
+                    return true;
+                }
+                else if(messageStr.equals("notavailable"))
+                {
+                    return false;
+                }
+            }
+        }
+        catch(Exception e)
+        {
+
+        }
+        return false;
+    }
+
+    //
+
 
     public boolean unRegister(InetSocketAddress centralServerAddress)
     {
